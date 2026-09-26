@@ -1,158 +1,582 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Papitta Play</title>
-<style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0f172a;color:#e2e8f0;font-family:system-ui,sans-serif;user-select:none}canvas{display:block;width:100vw;height:100vh}.start,.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a,#1e293b);z-index:5}.start.hidden,.modal.hidden{display:none}.card{width:min(92%,520px);padding:36px;border:1px solid #475569;border-radius:24px;background:#0f172af2;text-align:center;box-shadow:0 20px 70px #0008}.logo{font-size:60px}.title{font-size:clamp(38px,8vw,64px);font-weight:900;background:linear-gradient(135deg,#ff4d4d,#4da3ff,#4ade80);color:transparent;background-clip:text;margin:12px 0 20px}.desc{color:#cbd5e1;margin-bottom:28px}.btn{padding:13px 24px;border:1px solid #64748b;border-radius:12px;background:#1e293b;color:#f8fafc;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s}.btn:hover{filter:brightness(1.25);transform:translateY(-1px)}.primary{background:linear-gradient(135deg,#4da3ff,#4ade80);color:#0f172a;border:0}.buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.header{position:fixed;z-index:2;top:18px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.header>*{pointer-events:auto}.brand{font-size:25px;font-weight:900;background:linear-gradient(135deg,#ff4d4d,#4da3ff,#4ade80);color:transparent;background-clip:text}.menu{font-size:22px;padding:10px 13px}.hud{position:fixed;z-index:2;top:70px;right:20px;display:none;gap:8px;flex-direction:column}.hud.show{display:flex}.score{padding:9px 14px;border-radius:12px;border:1px solid currentColor;background:#1e293bcc;font-weight:700;transition:all .3s}.score.active{transform:scale(1.08);box-shadow:0 0 15px currentColor}.red{color:#fca5a5}.blue{color:#93c5fd}.green{color:#86efac}.turn{position:fixed;z-index:2;bottom:20px;left:20px;display:none;padding:12px 16px;border:1px solid #64748b;border-radius:12px;background:#1e293bcc;font-weight:700}.turn.show{display:block}.modal{background:#000b;z-index:10}.modal .card{text-align:left}.modal h2{text-align:center}.modal p{line-height:1.6}.modal .btn{width:100%;margin-top:15px}.setting{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155;padding:14px 0}.toggle{width:48px;height:26px;padding:2px;border:0;border-radius:20px;background:#475569;cursor:pointer}.toggle.on{background:#22c55e}.toggle i{display:block;width:22px;height:22px;border-radius:50%;background:white;transition:.2s}.toggle.on i{transform:translateX(22px)}@keyframes pop{0%{transform:scale(0);opacity:1}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}@keyframes glow{0%{filter:drop-shadow(0 0 0 currentColor)}50%{filter:drop-shadow(0 0 8px currentColor)}100%{filter:drop-shadow(0 0 0 currentColor)}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Papitta Play</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #020817, #111827 40%, #0f172a);
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    .start, .modal {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+    .start.hidden, .modal.hidden { display: none; }
+    .card {
+      width: min(92vw, 560px);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 24px;
+      padding: 32px 28px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    }
+    .logo { font-size: 64px; text-align: center; }
+    .title {
+      text-align: center;
+      margin: 12px 0 18px;
+      font-size: clamp(36px, 7vw, 64px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #ff4d4d, #4da3ff, #4ade80);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+    }
+    .desc {
+      text-align: center;
+      color: #cbd5e1; line-height: 1.6; margin-bottom: 28px;
+    }
+    .btns { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+    .btn {
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(30, 41, 59, 0.8);
+      color: white;
+      border-radius: 12px;
+      padding: 14px 22px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      transition: transform .18s ease, filter .18s ease;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+    .btn.primary {
+      background: linear-gradient(135deg, #4da3ff, #4ade80);
+      color: #0f172a; border: none;
+    }
+    .header {
+      position: fixed; top: 16px; left: 18px; right: 18px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 15;
+    }
+    .header > * { pointer-events: auto; }
+    .brand {
+      font-size: 28px; font-weight: 900;
+      background: linear-gradient(135deg, #ff4d4d, #4da3ff, #4ade80);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .menu-btn {
+      padding: 10px 12px; border-radius: 12px; font-size: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.3); background: rgba(15,23,42,0.7);
+      color: white; cursor: pointer;
+    }
+    .hud {
+      position: fixed; top: 76px; right: 18px; z-index: 15;
+      display: none; flex-direction: column; gap: 8px;
+    }
+    .hud.show { display: flex; }
+    .score {
+      min-width: 180px; padding: 10px 14px; border-radius: 12px; border: 1px solid currentColor;
+      background: rgba(15,23,42,0.7); color: white; font-weight: 700; transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .score.active {
+      transform: scale(1.05);
+      box-shadow: 0 0 18px currentColor;
+    }
+    .score.red { color: #fca5a5; }
+    .score.blue { color: #93c5fd; }
+    .score.green { color: #86efac; }
+    .turn {
+      position: fixed; left: 20px; bottom: 18px; z-index: 15;
+      display: none; padding: 12px 16px; border-radius: 12px;
+      background: rgba(15,23,42,0.78); border: 1px solid rgba(148,163,184,0.18);
+      font-weight: 700; color: #e2e8f0;
+    }
+    .turn.show { display: block; }
+    .voice-panel {
+      position: fixed; right: 18px; bottom: 18px; z-index: 15;
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+      background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+    }
+    .voice-btn {
+      width: 42px; height: 42px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #ef4444, #f97316); color: white;
+      font-size: 18px; cursor: pointer; box-shadow: 0 0 18px rgba(239,68,68,0.4);
+    }
+    .voice-btn.active {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 0 18px rgba(34,197,94,0.4);
+    }
+    .voice-meter {
+      position: relative; width: 110px; height: 10px; border-radius: 999px;
+      background: rgba(71,85,105,0.7); overflow: hidden;
+    }
+    .voice-meter > span {
+      position: absolute; inset: 0 auto 0 0; width: 0%;
+      background: linear-gradient(90deg, #22c55e, #84cc16, #facc15);
+      border-radius: inherit;
+      transition: width .1s ease;
+    }
+    .settings-panel {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: rgba(2,6,23,0.7); z-index: 30;
+    }
+    .settings-panel.show { display: flex; }
+    .settings-card {
+      width: min(92vw, 420px); background: rgba(15,23,42,0.96);
+      border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 22px; padding: 28px 24px;
+    }
+    .setting-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 12px 0; border-bottom: 1px solid rgba(148,163,184,0.15);
+    }
+    .toggle {
+      position: relative; width: 52px; height: 28px; border-radius: 999px;
+      background: rgba(71,85,105,0.9); border: none; cursor: pointer;
+      transition: background .2s ease;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+      border-radius: 50%; background: white; transition: transform .2s ease;
+    }
+    .toggle.on { background: #22c55e; }
+    .toggle.on::after { transform: translateX(24px); }
+    .settings-actions { display: flex; gap: 12px; margin-top: 24px; }
+    .settings-actions .btn { flex: 1; }
+    ul { padding-left: 20px; line-height: 1.8; }
+  </style>
 </head>
 <body>
-<div class="start" id="start"><div class="card"><div class="logo">🎮</div><div class="title">Papitta Play</div><div class="desc">Создавай фигуры из точек и захватывай территорию.</div><div class="buttons"><button class="btn primary" id="play">▶ Начать игру</button><button class="btn" id="help">📖 Как играть</button></div></div></div>
-<div class="modal hidden" id="rules"><div class="card"><h2>Как играть</h2><p><strong>Правила:</strong></p><ul style="text-align:left;line-height:1.8"><li>Каждый игрок ходит по очереди - один ход = одна точка</li><li>Точки идут подряд без пропусков между ними</li><li>На одну клетку может быть только одна точка (любого цвета)</li><li>Когда цепь замыкается в фигуру из 3+ точек - территория захватывается</li><li>Точки остаются на доске для визуала</li><li>Ход автоматически переходит следующему игроку</li></ul><button class="btn primary" id="closeRules">Понятно</button></div></div>
-<div class="modal hidden" id="settings"><div class="card"><h2>⚙️ Настройки</h2><div class="setting"><span>Показывать интерфейс</span><button class="toggle on" id="uiToggle"><i></i></button></div><div class="setting"><span>Показывать статус хода</span><button class="toggle on" id="hintToggle"><i></i></button></div><div class="buttons" style="margin-top:20px"><button class="btn" id="newGame">Новая игра</button><button class="btn primary" id="closeSettings">Закрыть</button></div></div></div>
-<canvas id="canvas"></canvas>
-<header class="header" id="header"><div class="brand">Papitta Play</div><button class="btn menu" id="menu">⚙️</button></header>
-<div class="hud" id="hud"><div class="score red" id="scoreRed">🔴 Красный: <b id="redScore">0</b></div><div class="score blue" id="scoreBlue">🔵 Синий: <b id="blueScore">0</b></div><div class="score green" id="scoreGreen">🟢 Зелёный: <b id="greenScore">0</b></div></div>
-<div class="turn" id="turn"></div>
-<script>
-const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),grid=50;
-const colors={red:'#ff4d4d',blue:'#4da3ff',green:'#4ade80'},players=['red','blue','green'];
-let turn=0,started=false,showUI=true,showStatus=true,scale=1,targetScale=1;
-let particles=[];
-let state={
-  allPoints:{},// key: "x,y", value: color
-  chains:{red:[],blue:[],green:[]},
-  filled:[],
-  score:{red:0,blue:0,green:0}
-};
+  <div class="start" id="startScreen">
+    <div class="card">
+      <div class="logo">🎮</div>
+      <div class="title">Papitta Play</div>
+      <div class="desc">Поставляйте точки, создавайте фигуры и захватывайте территорию. Всё сохраняется на поле, даже после заполнения.</div>
+      <div class="btns">
+        <button class="btn primary" id="startBtn">▶ Начать игру</button>
+        <button class="btn" id="rulesBtn">📖 Как играть</button>
+      </div>
+    </div>
+  </div>
 
-// Particle system for effects
-class Particle{constructor(x,y,color){this.x=x;this.y=y;this.color=color;this.life=1;this.vx=(Math.random()-.5)*4;this.vy=(Math.random()-1)*4}update(){this.life-=.02;this.x+=this.vx;this.y+=this.vy}draw(ctx){ctx.fillStyle=this.color;ctx.globalAlpha=this.life;ctx.beginPath();ctx.arc(this.x,this.y,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}}
+  <div class="modal hidden" id="rulesModal">
+    <div class="card">
+      <h2 style="margin-top:0; text-align:center;">Как играть</h2>
+      <ul>
+        <li>Каждый ход — одна точка.</li>
+        <li>Точки можно ставить в любом месте поля.</li>
+        <li>Когда минимум 3 точки одного цвета образуют фигуру, она закрашивается.</li>
+        <li>Точки не исчезают после захвата — они остаются на поле.</li>
+        <li>Нельзя поставить точку на уже занятую клетку.</li>
+      </ul>
+      <div class="btns" style="margin-top: 16px;">
+        <button class="btn primary" id="closeRulesBtn">Понятно</button>
+      </div>
+    </div>
+  </div>
 
-function spawnParticles(x,y,color,count=12){for(let i=0;i<count;i++)particles.push(new Particle(x,y,color))}
+  <canvas id="gameCanvas"></canvas>
 
-// Convert world coords to grid
-function worldToGrid(x,y){return{x:Math.round(x/grid)*grid,y:Math.round(y/grid)*grid}}
+  <header class="header" id="header">
+    <div class="brand">Papitta Play</div>
+    <button id="menuBtn" class="menu-btn" type="button">⚙️</button>
+  </header>
 
-// Get point key for tracking
-function getKey(p){return p.x+','+p.y}
+  <div class="hud" id="hud">
+    <div class="score red" id="scoreRed">🔴 Красный: <span id="redScore">0</span></div>
+    <div class="score blue" id="scoreBlue">🔵 Синий: <span id="blueScore">0</span></div>
+    <div class="score green" id="scoreGreen">🟢 Зелёный: <span id="greenScore">0</span></div>
+  </div>
 
-// Check if point exists anywhere on board
-function pointExists(p){return getKey(p) in state.allPoints}
+  <div class="turn" id="turnText">Ход: Красный</div>
 
-// Get color at position
-function getPointColor(p){return state.allPoints[getKey(p)]}
+  <div class="voice-panel">
+    <button id="voiceBtn" class="voice-btn" type="button" title="Голосовой чат">🎙️</button>
+    <div class="voice-meter"><span id="voiceLevel"></span></div>
+  </div>
 
-// Check if three points are collinear
-function collinear(p1,p2,p3){let d=(p2.y-p1.y)*(p3.x-p2.x)-(p2.x-p1.x)*(p3.y-p2.y);return Math.abs(d)<0.01}
+  <div id="settingsPanel" class="settings-panel">
+    <div class="settings-card">
+      <h2 style="margin-top:0;text-align:center;">Настройки</h2>
+      <div class="setting-row">
+        <span>Показывать интерфейс</span>
+        <button id="uiToggle" class="toggle on" type="button" aria-label="Показывать интерфейс"></button>
+      </div>
+      <div class="setting-row">
+        <span>Показывать статус хода</span>
+        <button id="turnToggle" class="toggle on" type="button" aria-label="Показывать статус хода"></button>
+      </div>
+      <div class="settings-actions">
+        <button id="newGameBtn" class="btn" type="button">Новая игра</button>
+        <button id="closeSettingsBtn" class="btn primary" type="button">Закрыть</button>
+      </div>
+    </div>
+  </div>
 
-// Check if points form a valid polygon (3+ non-collinear points)
-function validPolygon(points){if(points.length<3)return false;for(let i=0;i<points.length;i++){let p1=points[i],p2=points[(i+1)%points.length],p3=points[(i+2)%points.length];if(!collinear(p1,p2,p3))return true}return false}
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const GRID = 50;
+    const colors = {
+      red: '#ff4d4d',
+      blue: '#4da3ff',
+      green: '#4ade80'
+    };
+    const playerNames = { red: 'Красный', blue: 'Синий', green: 'Зелёный' };
+    const order = ['red', 'blue', 'green'];
+    let currentTurn = 0;
+    let started = false;
+    let showUI = true;
+    let showTurn = true;
+    let scale = 1;
+    let targetScale = 1;
 
-// Calculate polygon area
-function area(a){let n=0;for(let i=0;i<a.length;i++){let b=a[(i+1)%a.length];n+=a[i].x*b.y-b.x*a[i].y}return Math.abs(n)/2}
+    let state = {
+      points: { red: [], blue: [], green: [] },
+      filled: [],
+      score: { red: 0, blue: 0, green: 0 },
+      occupied: {}
+    };
 
-// Check if last point closes the polygon
-function isClosed(points){if(points.length<3)return false;let first=points[0],last=points[points.length-1];return Math.abs(first.x-last.x)<25&&Math.abs(first.y-last.y)<25}
+    let particles = [];
 
-// Check if points form a continuous chain (no gaps, adjacent only)
-function isConnected(points){if(points.length<2)return true;for(let i=0;i<points.length-1;i++){let p1=points[i],p2=points[i+1];let dx=Math.abs(p2.x-p1.x),dy=Math.abs(p2.y-p1.y);if(dx>grid||dy>grid)return false;if(dx===grid&&dy===grid)return false}return true}
+    function getKey(x, y) {
+      return `${Math.round(x)}:${Math.round(y)}`;
+    }
+    function pointExists(x, y) {
+      return !!state.occupied[getKey(x, y)];
+    }
+    function setTurn(index) {
+      currentTurn = index % order.length;
+      document.getElementById('turnText').textContent = 'Ход: ' + playerNames[order[currentTurn]];
+      document.querySelectorAll('.score').forEach(card => card.classList.remove('active'));
+      const activeEl = document.getElementById('score' + order[currentTurn].charAt(0).toUpperCase() + order[currentTurn].slice(1));
+      activeEl.closest('.score').classList.add('active');
+    }
+    function nextTurn() {
+      setTurn(currentTurn + 1);
+    }
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    function resetGame() {
+      state = { points: { red: [], blue: [], green: [] }, filled: [], score: { red: 0, blue: 0, green: 0 }, occupied: {} };
+      particles = [];
+      currentTurn = 0;
+      setTurn(0);
+      updateScores();
+    }
+    function updateScores() {
+      for (const color of order) {
+        const value = state.score[color] || 0;
+        document.getElementById(color + 'Score').textContent = value;
+      }
+    }
 
-function reset(){state={allPoints:{},chains:{red:[],blue:[],green:[]},filled:[],score:{red:0,blue:0,green:0}};turn=0;scale=targetScale=1;particles=[];update()}
+    function worldToScreen(x, y) {
+      return {
+        x: x * scale + window.innerWidth / 2,
+        y: y * scale + window.innerHeight / 2
+      };
+    }
+    function screenToWorld(sx, sy) {
+      return {
+        x: (sx - window.innerWidth / 2) / scale,
+        y: (sy - window.innerHeight / 2) / scale
+      };
+    }
+    function snapToGrid(x, y) {
+      return {
+        x: Math.round(x / GRID) * GRID,
+        y: Math.round(y / GRID) * GRID
+      };
+    }
+    function polygonArea(points) {
+      if (points.length < 3) return 0;
+      let area = 0;
+      for (let i = 0; i < points.length; i++) {
+        const a = points[i];
+        const b = points[(i + 1) % points.length];
+        area += a.x * b.y - b.x * a.y;
+      }
+      return Math.abs(area) / 2;
+    }
+    function isCollinear(a, b, c) {
+      return Math.abs((b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y)) < 0.1;
+    }
+    function sortPointsClockwise(points) {
+      const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+      const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+      return [...points].sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+    }
+    function tryCapture(color) {
+      const pts = state.points[color];
+      if (pts.length < 3) return;
 
-function nextTurn(){turn=(turn+1)%3;update()}
+      const ordered = sortPointsClockwise(pts);
+      let valid = true;
+      for (let i = 0; i < ordered.length; i++) {
+        const a = ordered[i];
+        const b = ordered[(i + 1) % ordered.length];
+        const c = ordered[(i + 2) % ordered.length];
+        if (isCollinear(a, b, c)) {
+          valid = false;
+          break;
+        }
+      }
+      if (!valid) return;
 
-function add(e){if(!started)return;let rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left-innerWidth/2)/scale,y=(e.clientY-rect.top-innerHeight/2)/scale,p=worldToGrid(x,y);
-  
-  // Can't place on existing point
-  if(pointExists(p))return;
-  
-  let c=players[turn],chain=state.chains[c];
-  
-  // Add to global points
-  state.allPoints[getKey(p)]=c;
-  
-  // Add to chain
-  chain.push(p);
-  
-  // Spawn pop animation
-  spawnParticles(p.x,p.y,colors[c]);
-  
-  // Check if closed
-  if(isClosed(chain)&&validPolygon(chain)&&isConnected(chain)){
-    state.filled.push({color:c,points:chain.slice()});
-    state.score[c]+=Math.round(area(chain)/100);
-    
-    // Spawn capture effect
-    chain.forEach(pt=>spawnParticles(pt.x,pt.y,colors[c],8));
-    
-    state.chains[c]=[];
-    nextTurn();
-    return;
-  }
-  
-  // Check connection breaks
-  if(!isConnected(chain)){
-    chain.pop();
-    delete state.allPoints[getKey(p)];
-    return;
-  }
-  
-  nextTurn();
-}
+      const area = polygonArea(ordered);
+      if (area < 50) return;
 
-function update(){let labels={red:'Красный',blue:'Синий',green:'Зелёный'};document.getElementById('turn').textContent='Ход: '+labels[players[turn]];
-  players.forEach(c=>{
-    let el=document.getElementById('score'+c.charAt(0).toUpperCase()+c.slice(1));
-    el.textContent=state.score[c];
-    let card=document.getElementById('score'+c.charAt(0).toUpperCase()+c.slice(1)).closest('.score');
-    card.classList.toggle('active',players[turn]===c);
-  })
-}
+      const exists = state.filled.some(item => item.color === color && item.points.length === ordered.length && item.points.every((p, i) => p.x === ordered[i].x && p.y === ordered[i].y));
+      if (exists) return;
 
-function screen(p){return{x:p.x*scale+innerWidth/2,y:p.y*scale+innerHeight/2}}
+      state.filled.push({ color, points: ordered.map(p => ({ ...p })) });
+      state.score[color] += Math.round(area / 100);
+      updateScores();
 
-function render(){ctx.fillStyle='#0f172a';ctx.fillRect(0,0,innerWidth,innerHeight);ctx.strokeStyle='#94a3b812';ctx.lineWidth=1;let extent=2500;for(let x=-extent;x<extent;x+=grid){let a=screen({x,y:-extent}),b=screen({x,y:extent});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}for(let y=-extent;y<extent;y+=grid){let a=screen({x:-extent,y}),b=screen({x:extent,y});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
-  
-  // Draw filled territories
-  state.filled.forEach((f,idx)=>{ctx.beginPath();f.points.forEach((p,i)=>{let q=screen(p);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.closePath();ctx.fillStyle=colors[f.color];ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=colors[f.color];ctx.lineWidth=2;ctx.stroke()});
-  
-  // Draw current player's chain highlighted
-  let currentChain=state.chains[players[turn]];
-  if(currentChain.length>0){ctx.strokeStyle=colors[players[turn]];ctx.lineWidth=2.5;ctx.globalAlpha=0.7;ctx.beginPath();currentChain.forEach((p,i)=>{let q=screen(p);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.stroke();ctx.globalAlpha=1}
-  
-  // Draw all persistent points with glow effect
-  for(let key in state.allPoints){let[x,y]=key.split(',').map(Number),p={x,y},c=state.allPoints[key],q=screen(p),isCurrentChain=currentChain.some(cp=>cp.x===p.x&&cp.y===p.y);
-    
-    // Glow for current chain points
-    if(isCurrentChain){ctx.fillStyle=colors[c];ctx.shadowColor=colors[c];ctx.shadowBlur=20;ctx.beginPath();ctx.arc(q.x,q.y,9,0,Math.PI*2);ctx.fill()}
-    
-    ctx.fillStyle=colors[c];ctx.shadowColor=colors[c];ctx.shadowBlur=8;ctx.beginPath();ctx.arc(q.x,q.y,7,0,Math.PI*2);ctx.fill()
-  }ctx.shadowBlur=0;
-  
-  // Update and draw particles
-  particles=particles.filter(p=>p.life>0);
-  particles.forEach(p=>{p.update();let q=screen({x:p.x,y:p.y});p.draw(ctx)});
-  
-  scale+=(targetScale-scale)*.1;requestAnimationFrame(render)}
+      ordered.forEach(pt => {
+        spawnParticles(pt.x, pt.y, colors[color], 10);
+      });
+    }
 
-function start(){started=true;document.getElementById('start').classList.add('hidden');document.getElementById('header').style.display='flex';if(showUI)document.getElementById('hud').classList.add('show');if(showStatus)document.getElementById('turn').classList.add('show');update()}
+    function spawnParticles(x, y, color, count = 10) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x, y,
+          color,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 1) * 4,
+          life: 1
+        });
+      }
+    }
 
-function toggle(id,on){document.getElementById(id).classList.toggle('on',on)}
+    function addPointAt(x, y) {
+      const snapped = snapToGrid(x, y);
+      const color = order[currentTurn];
+      if (pointExists(snapped.x, snapped.y)) return;
 
-document.getElementById('play').onclick=start;
-document.getElementById('help').onclick=()=>document.getElementById('rules').classList.remove('hidden');
-document.getElementById('closeRules').onclick=()=>{document.getElementById('rules').classList.add('hidden');start()};
-document.getElementById('menu').onclick=()=>document.getElementById('settings').classList.remove('hidden');
-document.getElementById('closeSettings').onclick=()=>document.getElementById('settings').classList.add('hidden');
-document.getElementById('newGame').onclick=()=>{reset();document.getElementById('settings').classList.add('hidden')};
-document.getElementById('uiToggle').onclick=()=>{showUI=!showUI;toggle('uiToggle',showUI);document.getElementById('hud').classList.toggle('show',showUI)};
-document.getElementById('hintToggle').onclick=()=>{showStatus=!showStatus;toggle('hintToggle',showStatus);document.getElementById('turn').classList.toggle('show',showStatus)};
+      state.points[color].push({ x: snapped.x, y: snapped.y });
+      state.occupied[getKey(snapped.x, snapped.y)] = color;
+      tryCapture(color);
+      nextTurn();
+    }
 
-canvas.addEventListener('pointerdown',add);
-canvas.addEventListener('wheel',e=>{e.preventDefault();targetScale=Math.max(.4,Math.min(2,targetScale*(e.deltaY>0?.9:1.1)))},{passive:false});
-addEventListener('resize',()=>{canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)});
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(148,163,184,0.12)';
+      ctx.lineWidth = 1;
+      const visible = 2200;
+      for (let x = -visible; x <= visible; x += GRID) {
+        const a = worldToScreen(x, -visible);
+        const b = worldToScreen(x, visible);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+      for (let y = -visible; y <= visible; y += GRID) {
+        const a = worldToScreen(-visible, y);
+        const b = worldToScreen(visible, y);
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
 
-canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);document.getElementById('header').style.display='none';update();render();
-</script></body></html>
+    function drawFilled() {
+      for (const fill of state.filled) {
+        const pts = fill.points.map(point => worldToScreen(point.x, point.y));
+        if (pts.length < 3) continue;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.closePath();
+        ctx.fillStyle = colors[fill.color];
+        ctx.globalAlpha = 0.42;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = colors[fill.color];
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawPoints() {
+      for (const color of order) {
+        for (const point of state.points[color]) {
+          const p = worldToScreen(point.x, point.y);
+          ctx.fillStyle = colors[color];
+          ctx.shadowColor = colors[color];
+          ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.shadowBlur = 0;
+    }
+
+    function drawParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.03;
+        const screen = worldToScreen(p.x, p.y);
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#020817';
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      drawGrid();
+      drawFilled();
+      drawPoints();
+      drawParticles();
+      scale += (targetScale - scale) * 0.08;
+      requestAnimationFrame(render);
+    }
+
+    function startGame() {
+      started = true;
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('hud').classList.toggle('show', showUI);
+      document.getElementById('turnText').classList.toggle('show', showTurn);
+      setTurn(0);
+      updateScores();
+    }
+
+    function getPointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const world = screenToWorld(sx, sy);
+      return world;
+    }
+
+    function onPointerDown(e) {
+      if (!started) return;
+      const p = getPointer(e);
+      addPointAt(p.x, p.y);
+    }
+
+    function onWheel(e) {
+      if (!started) return;
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 0.9 : 1.1;
+      targetScale = Math.min(2.2, Math.max(0.45, targetScale * factor));
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('rulesBtn').addEventListener('click', () => {
+      document.getElementById('rulesModal').classList.remove('hidden');
+    });
+    document.getElementById('closeRulesBtn').addEventListener('click', () => {
+      document.getElementById('rulesModal').classList.add('hidden');
+      startGame();
+    });
+
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      document.getElementById('settingsPanel').classList.add('show');
+    });
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsPanel').classList.remove('show');
+    });
+    document.getElementById('newGameBtn').addEventListener('click', () => {
+      resetGame();
+      document.getElementById('settingsPanel').classList.remove('show');
+    });
+    document.getElementById('uiToggle').addEventListener('click', () => {
+      showUI = !showUI;
+      document.getElementById('hud').classList.toggle('show', showUI);
+      document.getElementById('uiToggle').classList.toggle('on', showUI);
+    });
+    document.getElementById('turnToggle').addEventListener('click', () => {
+      showTurn = !showTurn;
+      document.getElementById('turnText').classList.toggle('show', showTurn);
+      document.getElementById('turnToggle').classList.toggle('on', showTurn);
+    });
+
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('resize', resizeCanvas);
+
+    // -------- Voice chat (microphone level only; local test mode) --------
+    let micStream = null;
+    let audioContext = null;
+    let analyser = null;
+    let micActive = false;
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceLevel = document.getElementById('voiceLevel');
+
+    async function toggleVoiceChat() {
+      if (micActive) {
+        if (micStream) micStream.getTracks().forEach(track => track.stop());
+        micStream = null;
+        micActive = false;
+        voiceBtn.classList.remove('active');
+        voiceLevel.style.width = '0%';
+        return;
+      }
+
+      try {
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        micActive = true;
+        voiceBtn.classList.add('active');
+
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        function tick() {
+          if (!micActive || !analyser) return;
+          analyser.getByteFrequencyData(data);
+          const avg = data.reduce((sum, v) => sum + v, 0) / data.length;
+          const percent = Math.min(100, (avg / 255) * 100 * 1.8);
+          voiceLevel.style.width = `${percent}%`;
+          requestAnimationFrame(tick);
+        }
+        tick();
+      } catch (error) {
+        console.warn('Voice chat unavailable:', error);
+        micActive = false;
+        voiceBtn.classList.remove('active');
+      }
+    }
+    voiceBtn.addEventListener('click', toggleVoiceChat);
+
+    resizeCanvas();
+    setTurn(0);
+    updateScores();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
