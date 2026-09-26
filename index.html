@@ -303,6 +303,7 @@
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d", { alpha: false, antialias: true });
+    const GRID_SIZE = 50;
 
     const COLORS = {
       red: { rgb: "#ff4d4d", rgbTuple: [255, 77, 77] },
@@ -386,6 +387,13 @@
       return Math.min(max, Math.max(min, value));
     }
 
+    function snapToGrid(x, y) {
+      return {
+        x: Math.round(x / GRID_SIZE) * GRID_SIZE,
+        y: Math.round(y / GRID_SIZE) * GRID_SIZE
+      };
+    }
+
     // ============ Coordinate Transform ============
     function worldToScreen(x, y) {
       return {
@@ -405,13 +413,18 @@
     function addPointToCurrentPlayer(px, py) {
       const color = order[currentTurn];
       const arr = state.points[color];
+      const snapped = snapToGrid(px, py);
 
-      // Don't add point too close to last point
-      if (arr.length > 0 && distance(arr[arr.length - 1], { x: px, y: py }) < 20) {
+      if (arr.length > 0 && arr[arr.length - 1].x === snapped.x && arr[arr.length - 1].y === snapped.y) {
         return;
       }
 
-      arr.push({ x: px, y: py });
+      // Don't add point too close to last point
+      if (arr.length > 0 && distance(arr[arr.length - 1], snapped) < 20) {
+        return;
+      }
+
+      arr.push({ x: snapped.x, y: snapped.y });
 
       const closed = isClosedLoop(arr);
       if (closed) {
@@ -464,7 +477,7 @@
 
     // ============ Rendering ============
     function drawGrid() {
-      const step = 50;
+      const step = GRID_SIZE;
       ctx.save();
       ctx.strokeStyle = "rgba(148, 163, 184, 0.08)";
       ctx.lineWidth = 1 / worldScale;
