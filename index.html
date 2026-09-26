@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Shapes - Territory Control Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .ui-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .header {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: auto;
+      gap: 20px;
+    }
+
+    .game-title {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff4d4d, #4da3ff, #4ade80);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+      text-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f1f5f9;
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    .btn:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-reset {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .btn-reset:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .scoreboard {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .score-card {
+      padding: 16px 24px;
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      border: 2px solid;
+      min-width: 200px;
+      transition: all 0.3s ease;
+    }
+
+    .score-card.red {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+    }
+
+    .score-card.blue {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.5);
+      color: #93c5fd;
+    }
+
+    .score-card.green {
+      background: rgba(74, 222, 128, 0.15);
+      border-color: rgba(74, 222, 128, 0.5);
+      color: #86efac;
+    }
+
+    .score-card.active {
+      transform: scale(1.08);
+      border-width: 2px;
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    .score-player-name {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+      text-transform: uppercase;
+    }
+
+    .score-value {
+      font-size: 32px;
+      font-weight: 800;
+      margin-top: 4px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .score-area {
+      font-size: 16px;
+      opacity: 0.7;
+    }
+
+    .turn-indicator {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      padding: 16px 24px;
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      border: 2px solid;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+      font-weight: 600;
+    }
+
+    .turn-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      box-shadow: 0 0 16px currentColor;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.15);
+        opacity: 0.8;
+      }
+    }
+
+    .instructions {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      font-size: 12px;
+      max-width: 280px;
+      line-height: 1.5;
+    }
+
+    .instr-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #f1f5f9;
+    }
+
+    .instr-item {
+      margin: 4px 0;
+    }
+
+    .stats-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 16px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      font-size: 13px;
+      text-align: center;
+      pointer-events: auto;
+    }
+
+    .stats-item {
+      display: inline-block;
+      margin: 0 12px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="ui-container">
+    <div class="header">
+      <div class="game-title">🎮 Color Territory</div>
+      <div class="controls">
+        <button class="btn btn-reset" id="resetBtn">↺ Новая игра</button>
+      </div>
+    </div>
+
+    <div class="scoreboard">
+      <div class="score-card red" id="scoreRed">
+        <div class="score-player-name">🔴 Красный</div>
+        <div class="score-value">
+          <span id="scoreRedValue">0</span>
+          <span class="score-area" id="scoreRedArea">кв.м</span>
+        </div>
+      </div>
+      <div class="score-card blue" id="scoreBlue">
+        <div class="score-player-name">🔵 Синий</div>
+        <div class="score-value">
+          <span id="scoreBlueValue">0</span>
+          <span class="score-area" id="scoreBlueArea">кв.м</span>
+        </div>
+      </div>
+      <div class="score-card green" id="scoreGreen">
+        <div class="score-player-name">🟢 Зелёный</div>
+        <div class="score-value">
+          <span id="scoreGreenValue">0</span>
+          <span class="score-area" id="scoreGreenArea">кв.м</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="turn-indicator" id="turnIndicator">
+      <div class="turn-swatch" id="turnSwatch"></div>
+      <span id="turnText">Ход: Красный</span>
+    </div>
+
+    <div class="instructions">
+      <div class="instr-title">📖 Как играть</div>
+      <div class="instr-item">🖱 Клик = точка</div>
+      <div class="instr-item">🔄 Замкни фигуру = захвата</div>
+      <div class="instr-item">⏱ Удержание = зум сброс</div>
+      <div class="instr-item">👐 2 пальца = zoom</div>
+    </div>
+
+    <div class="stats-panel" id="statsPanel">
+      <span class="stats-item">Территория захвачена: <span id="totalArea">0</span></span>
+      <span class="stats-item">Фигур: <span id="totalFilled">0</span></span>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d", { alpha: false, antialias: true });
+
+    const COLORS = {
+      red: { rgb: "#ff4d4d", rgbTuple: [255, 77, 77] },
+      blue: { rgb: "#4da3ff", rgbTuple: [77, 163, 255] },
+      green: { rgb: "#4ade80", rgbTuple: [74, 222, 128] }
+    };
+
+    const names = {
+      red: "Красный",
+      blue: "Синий",
+      green: "Зелёный"
+    };
+
+    const order = ["red", "blue", "green"];
+    let currentTurn = 0;
+
+    // Camera / Zoom
+    let worldScale = 1;
+    let targetScale = 1;
+    let cameraX = 0;
+    let cameraY = 0;
+
+    // Game state
+    const state = {
+      points: { red: [], blue: [], green: [] },
+      filled: [],
+      scores: { red: 0, blue: 0, green: 0 }
+    };
+
+    let pointerPressStart = null;
+    let pointerDown = false;
+    const pinch = { active: false, startDist: 0, startScale: 1 };
+
+    // ============ Setup ============
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+
+    function setCurrentTurn(index) {
+      currentTurn = index % order.length;
+      const color = order[currentTurn];
+      document.getElementById("turnText").textContent = "Ход: " + names[color];
+      document.getElementById("turnSwatch").style.background = COLORS[color].rgb;
+      document.getElementById("turnSwatch").style.boxShadow = `0 0 16px ${COLORS[color].rgb}`;
+
+      // Update score card active state
+      document.querySelectorAll(".score-card").forEach(card => card.classList.remove("active"));
+      document.getElementById("score" + color.charAt(0).toUpperCase() + color.slice(1)).classList.add("active");
+    }
+
+    function nextTurn() {
+      setCurrentTurn(currentTurn + 1);
+    }
+
+    // ============ Math ============
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function polygonArea(points) {
+      if (points.length < 3) return 0;
+      let area = 0;
+      for (let i = 0; i < points.length; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % points.length];
+        area += p1.x * p2.y - p2.x * p1.y;
+      }
+      return Math.abs(area) / 2;
+    }
+
+    function isClosedLoop(points) {
+      if (points.length < 4) return false;
+      const first = points[0];
+      const last = points[points.length - 1];
+      return distance(first, last) < 32;
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    // ============ Coordinate Transform ============
+    function worldToScreen(x, y) {
+      return {
+        x: (x - cameraX) * worldScale + canvas.clientWidth / 2,
+        y: (y - cameraY) * worldScale + canvas.clientHeight / 2
+      };
+    }
+
+    function screenToWorld(sx, sy) {
+      return {
+        x: (sx - canvas.clientWidth / 2) / worldScale + cameraX,
+        y: (sy - canvas.clientHeight / 2) / worldScale + cameraY
+      };
+    }
+
+    // ============ Game Logic ============
+    function addPointToCurrentPlayer(px, py) {
+      const color = order[currentTurn];
+      const arr = state.points[color];
+
+      // Don't add point too close to last point
+      if (arr.length > 0 && distance(arr[arr.length - 1], { x: px, y: py }) < 20) {
+        return;
+      }
+
+      arr.push({ x: px, y: py });
+
+      const closed = isClosedLoop(arr);
+      if (closed) {
+        const area = polygonArea(arr);
+        if (area > 50) {
+          const fill = {
+            color,
+            points: arr.slice(),
+            area
+          };
+          state.filled.push(fill);
+          state.scores[color] += Math.round(area / 100);
+          updateScoreboard();
+
+          // Clear points after capturing
+          state.points[color] = [];
+        }
+      }
+
+      // Zoom out after move
+      targetScale = clamp(worldScale * 0.88, 0.4, 1.5);
+      nextTurn();
+    }
+
+    function resetGame() {
+      state.points = { red: [], blue: [], green: [] };
+      state.filled = [];
+      state.scores = { red: 0, blue: 0, green: 0 };
+      currentTurn = 0;
+      worldScale = 1;
+      targetScale = 1;
+      cameraX = 0;
+      cameraY = 0;
+      setCurrentTurn(0);
+      updateScoreboard();
+    }
+
+    function updateScoreboard() {
+      for (const color of order) {
+        const score = state.scores[color];
+        const area = score * 100;
+        document.getElementById(`score${color.charAt(0).toUpperCase() + color.slice(1)}Value`).textContent = score;
+      }
+
+      const totalArea = Object.values(state.scores).reduce((a, b) => a + b, 0) * 100;
+      const totalFilled = state.filled.length;
+      document.getElementById("totalArea").textContent = totalArea;
+      document.getElementById("totalFilled").textContent = totalFilled;
+    }
+
+    // ============ Rendering ============
+    function drawGrid() {
+      const step = 50;
+      ctx.save();
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.08)";
+      ctx.lineWidth = 1 / worldScale;
+
+      const visible = 2500 / worldScale;
+      const minX = Math.floor((cameraX - visible) / step) * step;
+      const maxX = Math.ceil((cameraX + visible) / step) * step;
+      const minY = Math.floor((cameraY - visible) / step) * step;
+      const maxY = Math.ceil((cameraY + visible) / step) * step;
+
+      for (let x = minX; x <= maxX; x += step) {
+        const p1 = worldToScreen(x, minY);
+        const p2 = worldToScreen(x, maxY);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+
+      for (let y = minY; y <= maxY; y += step) {
+        const p1 = worldToScreen(minX, y);
+        const p2 = worldToScreen(maxX, y);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawFilledShapes() {
+      for (const fill of state.filled) {
+        const pts = fill.points.map(p => worldToScreen(p.x, p.y));
+        if (pts.length < 3) continue;
+
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.closePath();
+
+        ctx.fillStyle = COLORS[fill.color].rgb;
+        ctx.globalAlpha = 0.45;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = COLORS[fill.color].rgb;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+
+    function drawPoints() {
+      for (const color of order) {
+        const arr = state.points[color];
+        for (let i = 0; i < arr.length; i++) {
+          const p = arr[i];
+          const sc = worldToScreen(p.x, p.y);
+
+          ctx.beginPath();
+          ctx.fillStyle = COLORS[color].rgb;
+          ctx.shadowColor = COLORS[color].rgb;
+          ctx.shadowBlur = 20;
+          ctx.arc(sc.x, sc.y, 7, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (i > 0) {
+            const prevP = arr[i - 1];
+            const prevSc = worldToScreen(prevP.x, prevP.y);
+            ctx.beginPath();
+            ctx.strokeStyle = COLORS[color].rgb;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.6;
+            ctx.moveTo(prevSc.x, prevSc.y);
+            ctx.lineTo(sc.x, sc.y);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function drawCurrentPreview() {
+      const color = order[currentTurn];
+      const arr = state.points[color];
+
+      if (arr.length > 1) {
+        const path = arr.map(p => worldToScreen(p.x, p.y));
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+
+        ctx.strokeStyle = COLORS[color].rgb;
+        ctx.lineWidth = 2.5;
+        ctx.globalAlpha = 0.8;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      if (arr.length >= 3 && isClosedLoop(arr)) {
+        const path = arr.map(p => worldToScreen(p.x, p.y));
+        ctx.beginPath();
+        ctx.moveTo(path[0].x, path[0].y);
+        for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+        ctx.closePath();
+
+        ctx.fillStyle = COLORS[color].rgb;
+        ctx.globalAlpha = 0.15;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function render() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+
+      // Background
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawGrid();
+      drawFilledShapes();
+      drawPoints();
+      drawCurrentPreview();
+    }
+
+    function tick() {
+      worldScale += (targetScale - worldScale) * 0.1;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    // ============ Input ============
+    function getPointerPosition(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        sx: event.clientX - rect.left,
+        sy: event.clientY - rect.top
+      };
+    }
+
+    function handlePointerDown(event) {
+      if (event.button === 2) return; // Right click
+      pointerDown = true;
+      pointerPressStart = performance.now();
+
+      const p = getPointerPosition(event);
+      const wp = screenToWorld(p.sx, p.sy);
+      addPointToCurrentPlayer(wp.x, wp.y);
+    }
+
+    function handlePointerUp() {
+      pointerDown = false;
+      pointerPressStart = null;
+    }
+
+    function handleWheel(event) {
+      event.preventDefault();
+      const factor = event.deltaY > 0 ? 0.9 : 1.1;
+      targetScale = clamp(targetScale * factor, 0.4, 2);
+      worldScale = targetScale;
+    }
+
+    function handleTouchStart(e) {
+      if (e.touches.length === 2) {
+        const a = e.touches[0];
+        const b = e.touches[1];
+        const dx = a.clientX - b.clientX;
+        const dy = a.clientY - b.clientY;
+        pinch.active = true;
+        pinch.startDist = Math.hypot(dx, dy);
+        pinch.startScale = targetScale;
+      }
+    }
+
+    function handleTouchMove(e) {
+      if (e.touches.length === 2 && pinch.active) {
+        const a = e.touches[0];
+        const b = e.touches[1];
+        const dx = a.clientX - b.clientX;
+        const dy = a.clientY - b.clientY;
+        const dist = Math.hypot(dx, dy);
+        const ratio = dist / Math.max(1, pinch.startDist);
+        targetScale = clamp(pinch.startScale * ratio, 0.4, 2);
+        worldScale = targetScale;
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (e.touches.length < 2) pinch.active = false;
+    }
+
+    function checkHoldReset() {
+      if (pointerDown && pointerPressStart) {
+        const elapsed = performance.now() - pointerPressStart;
+        if (elapsed > 500) {
+          targetScale = 1;
+          worldScale = 1;
+          cameraX = 0;
+          cameraY = 0;
+          pointerDown = false;
+          pointerPressStart = null;
+        }
+      }
+    }
+
+    // ============ Init ============
+    setCurrentTurn(0);
+    updateScoreboard();
+
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    canvas.addEventListener("pointerup", handlePointerUp);
+    canvas.addEventListener("pointercancel", handlePointerUp);
+    canvas.addEventListener("pointerleave", handlePointerUp);
+    canvas.addEventListener("contextmenu", e => e.preventDefault());
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: true });
+    canvas.addEventListener("touchmove", handleTouchMove, { passive: true });
+    canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
+    canvas.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+
+    window.addEventListener("resize", resizeCanvas);
+
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+    resizeCanvas();
+    requestAnimationFrame(tick);
+    setInterval(checkHoldReset, 30);
+  </script>
+</body>
+</html>
