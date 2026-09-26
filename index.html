@@ -9,7 +9,7 @@
 </head>
 <body>
 <div class="start" id="start"><div class="card"><div class="logo">🎮</div><div class="title">Papitta Play</div><div class="desc">Создавай фигуры из точек и захватывай территорию.</div><div class="buttons"><button class="btn primary" id="play">▶ Начать игру</button><button class="btn" id="help">📖 Как играть</button></div></div></div>
-<div class="modal hidden" id="rules"><div class="card"><h2>Как играть</h2><p><strong>Правила:</strong></p><ul style="text-align:left;line-height:1.8"><li>Нажимай на поле, чтобы ставить точки</li><li>Точки одного цвета могут соединяться только если они идут подряд без пропусков</li><li>Нельзя поставить точку на место, где уже есть другая</li><li>Фигура готова, когда 3+ точки замыкают контур</li><li>После создания фигуры ход переходит следующему игроку</li></ul><button class="btn primary" id="closeRules">Понятно</button></div></div>
+<div class="modal hidden" id="rules"><div class="card"><h2>Как играть</h2><p><strong>Правила:</strong></p><ul style="text-align:left;line-height:1.8"><li>Каждый игрок ходит по очереди - один ход = одна точка</li><li>Точки идут подряд без пропусков между ними</li><li>На одну клетку может быть только одна точка (любого цвета)</li><li>Когда цепь замыкается в фигуру из 3+ точек - территория захватывается</li><li>Точки остаются на доске для визуала</li><li>Ход автоматически переходит следующему игроку</li></ul><button class="btn primary" id="closeRules">Понятно</button></div></div>
 <div class="modal hidden" id="settings"><div class="card"><h2>⚙️ Настройки</h2><div class="setting"><span>Показывать интерфейс</span><button class="toggle on" id="uiToggle"><i></i></button></div><div class="setting"><span>Показывать статус хода</span><button class="toggle on" id="hintToggle"><i></i></button></div><div class="buttons" style="margin-top:20px"><button class="btn" id="newGame">Новая игра</button><button class="btn primary" id="closeSettings">Закрыть</button></div></div></div>
 <canvas id="canvas"></canvas>
 <header class="header" id="header"><div class="brand">Papitta Play</div><button class="btn menu" id="menu">⚙️</button></header>
@@ -19,13 +19,24 @@
 const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),grid=50;
 const colors={red:'#ff4d4d',blue:'#4da3ff',green:'#4ade80'},players=['red','blue','green'];
 let turn=0,started=false,showUI=true,showStatus=true,scale=1,targetScale=1;
-let state={points:{red:[],blue:[],green:[]},filled:[],score:{red:0,blue:0,green:0}};
+let state={
+  allPoints:{},// key: "x,y", value: color
+  chains:{red:[],blue:[],green:[]},
+  filled:[],
+  score:{red:0,blue:0,green:0}
+};
 
 // Convert world coords to grid
 function worldToGrid(x,y){return{x:Math.round(x/grid)*grid,y:Math.round(y/grid)*grid}}
 
-// Check if a point exists on the board (any color)
-function pointExists(p){return players.some(c=>state.points[c].some(q=>q.x===p.x&&q.y===p.y))}
+// Get point key for tracking
+function getKey(p){return p.x+','+p.y}
+
+// Check if point exists anywhere on board
+function pointExists(p){return getKey(p) in state.allPoints}
+
+// Get color at position
+function getPointColor(p){return state.allPoints[getKey(p)]}
 
 // Check if three points are collinear
 function collinear(p1,p2,p3){let d=(p2.y-p1.y)*(p3.x-p2.x)-(p2.x-p1.x)*(p3.y-p2.y);return Math.abs(d)<0.01}
@@ -39,24 +50,46 @@ function area(a){let n=0;for(let i=0;i<a.length;i++){let b=a[(i+1)%a.length];n+=
 // Check if last point closes the polygon
 function isClosed(points){if(points.length<3)return false;let first=points[0],last=points[points.length-1];return Math.abs(first.x-last.x)<25&&Math.abs(first.y-last.y)<25}
 
-// Check if points form a continuous chain (no gaps, no opponent pieces)
+// Check if points form a continuous chain (no gaps, adjacent only)
 function isConnected(points){if(points.length<2)return true;for(let i=0;i<points.length-1;i++){let p1=points[i],p2=points[i+1];let dx=Math.abs(p2.x-p1.x),dy=Math.abs(p2.y-p1.y);if(dx>grid||dy>grid)return false;if(dx===grid&&dy===grid)return false}return true}
 
-function reset(){state={points:{red:[],blue:[],green:[]},filled:[],score:{red:0,blue:0,green:0}};turn=0;scale=targetScale=1;update()}
+// Check if all points in chain are same color
+function chainSameColor(points,color){return points.every(p=>getPointColor(p)===color)}
+
+function reset(){state={allPoints:{},chains:{red:[],blue:[],green:[]},filled:[],score:{red:0,blue:0,green:0}};turn=0;scale=targetScale=1;update()}
 
 function nextTurn(){turn=(turn+1)%3;update()}
 
 function add(e){if(!started)return;let rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left-innerWidth/2)/scale,y=(e.clientY-rect.top-innerHeight/2)/scale,p=worldToGrid(x,y);
+  
   // Can't place on existing point
   if(pointExists(p))return;
-  let c=players[turn],arr=state.points[c];
-  arr.push(p);
+  
+  let c=players[turn],chain=state.chains[c];
+  
+  // Add to global points
+  state.allPoints[getKey(p)]=c;
+  
+  // Add to chain
+  chain.push(p);
   
   // Check if closed
-  if(isClosed(arr)&&validPolygon(arr)&&isConnected(arr)){state.filled.push({color:c,points:arr.slice()});state.score[c]+=Math.round(area(arr)/100);state.points[c]=[];nextTurn();return}
+  if(isClosed(chain)&&validPolygon(chain)&&isConnected(chain)){
+    state.filled.push({color:c,points:chain.slice()});
+    state.score[c]+=Math.round(area(chain)/100);
+    state.chains[c]=[];
+    nextTurn();
+    return;
+  }
   
   // Check connection breaks
-  if(!isConnected(arr)){arr.pop();return}
+  if(!isConnected(chain)){
+    chain.pop();
+    delete state.allPoints[getKey(p)];
+    return;
+  }
+  
+  nextTurn();
 }
 
 function update(){let labels={red:'Красный',blue:'Синий',green:'Зелёный'};document.getElementById('turn').textContent='Ход: '+labels[players[turn]];players.forEach(c=>document.getElementById(c+'Score').textContent=state.score[c])}
@@ -65,11 +98,11 @@ function screen(p){return{x:p.x*scale+innerWidth/2,y:p.y*scale+innerHeight/2}}
 
 function render(){ctx.fillStyle='#0f172a';ctx.fillRect(0,0,innerWidth,innerHeight);ctx.strokeStyle='#94a3b812';ctx.lineWidth=1;let extent=2500;for(let x=-extent;x<extent;x+=grid){let a=screen({x,y:-extent}),b=screen({x,y:extent});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}for(let y=-extent;y<extent;y+=grid){let a=screen({x:-extent,y}),b=screen({x:extent,y});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
   
-  // Draw filled
+  // Draw filled territories
   state.filled.forEach(f=>{ctx.beginPath();f.points.forEach((p,i)=>{let q=screen(p);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.closePath();ctx.fillStyle=colors[f.color];ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=colors[f.color];ctx.lineWidth=2;ctx.stroke()});
   
-  // Draw all points (no connections for unfinished chains)
-  players.forEach(c=>{ctx.fillStyle=colors[c];state.points[c].forEach(p=>{let q=screen(p);ctx.beginPath();ctx.arc(q.x,q.y,7,0,Math.PI*2);ctx.fill()})});
+  // Draw all persistent points
+  for(let key in state.allPoints){let[x,y]=key.split(',').map(Number),p={x,y},c=state.allPoints[key],q=screen(p);ctx.fillStyle=colors[c];ctx.beginPath();ctx.arc(q.x,q.y,7,0,Math.PI*2);ctx.fill()}
   
   scale+=(targetScale-scale)*.1;requestAnimationFrame(render)}
 
