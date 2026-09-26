@@ -9,8 +9,8 @@
 </head>
 <body>
 <div class="start" id="start"><div class="card"><div class="logo">🎮</div><div class="title">Papitta Play</div><div class="desc">Создавай фигуры из точек и захватывай территорию.</div><div class="buttons"><button class="btn primary" id="play">▶ Начать игру</button><button class="btn" id="help">📖 Как играть</button></div></div></div>
-<div class="modal hidden" id="rules"><div class="card"><h2>Как играть</h2><p>Нажимай на поле, чтобы ставить точки. Линии не появляются, пока не будет минимум три точки, образующие настоящую фигуру. Три точки на одной прямой фигурой не считаются.</p><p>После создания фигуры её территория захватывается автоматически. Игроки ходят по очереди.</p><button class="btn primary" id="closeRules">Понятно</button></div></div>
-<div class="modal hidden" id="settings"><div class="card"><h2>⚙️ Настройки</h2><div class="setting"><span>Показывать интерфейс</span><button class="toggle on" id="uiToggle"><i></i></button></div><div class="setting"><span>Показывать подсказки</span><button class="toggle on" id="hintToggle"><i></i></button></div><div class="buttons" style="margin-top:20px"><button class="btn" id="newGame">Новая игра</button><button class="btn primary" id="closeSettings">Закрыть</button></div></div></div>
+<div class="modal hidden" id="rules"><div class="card"><h2>Как играть</h2><p><strong>Правила:</strong></p><ul style="text-align:left;line-height:1.8"><li>Нажимай на поле, чтобы ставить точки</li><li>Точки одного цвета могут соединяться только если они идут подряд без пропусков</li><li>Нельзя поставить точку на место, где уже есть другая</li><li>Фигура готова, когда 3+ точки замыкают контур</li><li>После создания фигуры ход переходит следующему игроку</li></ul><button class="btn primary" id="closeRules">Понятно</button></div></div>
+<div class="modal hidden" id="settings"><div class="card"><h2>⚙️ Настройки</h2><div class="setting"><span>Показывать интерфейс</span><button class="toggle on" id="uiToggle"><i></i></button></div><div class="setting"><span>Показывать статус хода</span><button class="toggle on" id="hintToggle"><i></i></button></div><div class="buttons" style="margin-top:20px"><button class="btn" id="newGame">Новая игра</button><button class="btn primary" id="closeSettings">Закрыть</button></div></div></div>
 <canvas id="canvas"></canvas>
 <header class="header" id="header"><div class="brand">Papitta Play</div><button class="btn menu" id="menu">⚙️</button></header>
 <div class="hud" id="hud"><div class="score red">🔴 Красный: <b id="redScore">0</b></div><div class="score blue">🔵 Синий: <b id="blueScore">0</b></div><div class="score green">🟢 Зелёный: <b id="greenScore">0</b></div></div>
@@ -18,26 +18,77 @@
 <script>
 const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d'),grid=50;
 const colors={red:'#ff4d4d',blue:'#4da3ff',green:'#4ade80'},players=['red','blue','green'];
-let turn=0,started=false,showUI=true,showHints=true,scale=1,targetScale=1;
+let turn=0,started=false,showUI=true,showStatus=true,scale=1,targetScale=1;
 let state={points:{red:[],blue:[],green:[]},filled:[],score:{red:0,blue:0,green:0}};
-function resize(){canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
-function pos(e){let r=canvas.getBoundingClientRect();return{x:Math.round(((e.clientX-r.left-innerWidth/2)/scale)/grid)*grid,y:Math.round(((e.clientY-r.top-innerHeight/2)/scale)/grid)*grid}}
+
+// Convert world coords to grid
+function worldToGrid(x,y){return{x:Math.round(x/grid)*grid,y:Math.round(y/grid)*grid}}
+
+// Check if a point exists on the board (any color)
+function pointExists(p){return players.some(c=>state.points[c].some(q=>q.x===p.x&&q.y===p.y))}
+
+// Check if three points are collinear
+function collinear(p1,p2,p3){let d=(p2.y-p1.y)*(p3.x-p2.x)-(p2.x-p1.x)*(p3.y-p2.y);return Math.abs(d)<0.01}
+
+// Check if points form a valid polygon (3+ non-collinear points)
+function validPolygon(points){if(points.length<3)return false;for(let i=0;i<points.length;i++){let p1=points[i],p2=points[(i+1)%points.length],p3=points[(i+2)%points.length];if(!collinear(p1,p2,p3))return true}return false}
+
+// Calculate polygon area
 function area(a){let n=0;for(let i=0;i<a.length;i++){let b=a[(i+1)%a.length];n+=a[i].x*b.y-b.x*a[i].y}return Math.abs(n)/2}
-function valid(a){return a.length>=3&&area(a)>0}
+
+// Check if last point closes the polygon
+function isClosed(points){if(points.length<3)return false;let first=points[0],last=points[points.length-1];return Math.abs(first.x-last.x)<25&&Math.abs(first.y-last.y)<25}
+
+// Check if points form a continuous chain (no gaps, no opponent pieces)
+function isConnected(points){if(points.length<2)return true;for(let i=0;i<points.length-1;i++){let p1=points[i],p2=points[i+1];let dx=Math.abs(p2.x-p1.x),dy=Math.abs(p2.y-p1.y);if(dx>grid||dy>grid)return false;if(dx===grid&&dy===grid)return false}return true}
+
 function reset(){state={points:{red:[],blue:[],green:[]},filled:[],score:{red:0,blue:0,green:0}};turn=0;scale=targetScale=1;update()}
-function add(e){if(!started)return;let p=pos(e),c=players[turn],a=state.points[c];if(a.some(q=>q.x===p.x&&q.y===p.y))return;a.push(p);
-  // Do not draw or connect points until three non-collinear points exist.
-  if(valid(a)){state.filled.push({color:c,points:a.slice()});state.score[c]+=Math.round(area(a)/100);state.points[c]=[];turn=(turn+1)%3;update()}
+
+function nextTurn(){turn=(turn+1)%3;update()}
+
+function add(e){if(!started)return;let rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left-innerWidth/2)/scale,y=(e.clientY-rect.top-innerHeight/2)/scale,p=worldToGrid(x,y);
+  // Can't place on existing point
+  if(pointExists(p))return;
+  let c=players[turn],arr=state.points[c];
+  arr.push(p);
+  
+  // Check if closed
+  if(isClosed(arr)&&validPolygon(arr)&&isConnected(arr)){state.filled.push({color:c,points:arr.slice()});state.score[c]+=Math.round(area(arr)/100);state.points[c]=[];nextTurn();return}
+  
+  // Check connection breaks
+  if(!isConnected(arr)){arr.pop();return}
 }
-function update(){players.forEach(c=>document.getElementById(c+'Score').textContent=state.score[c]);document.getElementById('turn').textContent='Ход: '+({red:'Красный',blue:'Синий',green:'Зелёный'}[players[turn]])+' — минимум 3 точки не на одной линии';}
-function screen(p){return{x:(p.x)*scale+innerWidth/2,y:(p.y)*scale+innerHeight/2}}
+
+function update(){let labels={red:'Красный',blue:'Синий',green:'Зелёный'};document.getElementById('turn').textContent='Ход: '+labels[players[turn]];players.forEach(c=>document.getElementById(c+'Score').textContent=state.score[c])}
+
+function screen(p){return{x:p.x*scale+innerWidth/2,y:p.y*scale+innerHeight/2}}
+
 function render(){ctx.fillStyle='#0f172a';ctx.fillRect(0,0,innerWidth,innerHeight);ctx.strokeStyle='#94a3b812';ctx.lineWidth=1;let extent=2500;for(let x=-extent;x<extent;x+=grid){let a=screen({x,y:-extent}),b=screen({x,y:extent});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}for(let y=-extent;y<extent;y+=grid){let a=screen({x:-extent,y}),b=screen({x:extent,y});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
- state.filled.forEach(f=>{ctx.beginPath();f.points.forEach((p,i)=>{let q=screen(p);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.closePath();ctx.fillStyle=colors[f.color];ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=colors[f.color];ctx.lineWidth=2;ctx.stroke()});
- // Points are always visible, but unfinished points are never connected.
- players.forEach(c=>state.points[c].forEach(p=>{let q=screen(p);ctx.beginPath();ctx.fillStyle=colors[c];ctx.arc(q.x,q.y,7,0,Math.PI*2);ctx.fill()}));scale+=(targetScale-scale)*.1;requestAnimationFrame(render)}
-function start(){started=true;document.getElementById('start').classList.add('hidden');document.getElementById('header').style.display='flex';if(showUI){document.getElementById('hud').classList.add('show');document.getElementById('turn').classList.add('show')}update()}
+  
+  // Draw filled
+  state.filled.forEach(f=>{ctx.beginPath();f.points.forEach((p,i)=>{let q=screen(p);i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y)});ctx.closePath();ctx.fillStyle=colors[f.color];ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=colors[f.color];ctx.lineWidth=2;ctx.stroke()});
+  
+  // Draw all points (no connections for unfinished chains)
+  players.forEach(c=>{ctx.fillStyle=colors[c];state.points[c].forEach(p=>{let q=screen(p);ctx.beginPath();ctx.arc(q.x,q.y,7,0,Math.PI*2);ctx.fill()})});
+  
+  scale+=(targetScale-scale)*.1;requestAnimationFrame(render)}
+
+function start(){started=true;document.getElementById('start').classList.add('hidden');document.getElementById('header').style.display='flex';if(showUI)document.getElementById('hud').classList.add('show');if(showStatus)document.getElementById('turn').classList.add('show');update()}
+
 function toggle(id,on){document.getElementById(id).classList.toggle('on',on)}
-document.getElementById('play').onclick=start;document.getElementById('help').onclick=()=>document.getElementById('rules').classList.remove('hidden');document.getElementById('closeRules').onclick=()=>{document.getElementById('rules').classList.add('hidden');start()};document.getElementById('menu').onclick=()=>document.getElementById('settings').classList.remove('hidden');document.getElementById('closeSettings').onclick=()=>document.getElementById('settings').classList.add('hidden');document.getElementById('newGame').onclick=()=>{reset();document.getElementById('settings').classList.add('hidden')};
-document.getElementById('uiToggle').onclick=()=>{showUI=!showUI;toggle('uiToggle',showUI);document.getElementById('hud').classList.toggle('show',showUI);document.getElementById('turn').classList.toggle('show',showUI)};document.getElementById('hintToggle').onclick=()=>{showHints=!showHints;toggle('hintToggle',showHints);document.getElementById('turn').classList.toggle('show',showHints&&showUI)};
-canvas.addEventListener('pointerdown',add);canvas.addEventListener('wheel',e=>{e.preventDefault();targetScale=Math.max(.4,Math.min(2,targetScale*(e.deltaY>0?.9:1.1)))},{passive:false});addEventListener('resize',resize);resize();document.getElementById('header').style.display='none';update();render();
+
+document.getElementById('play').onclick=start;
+document.getElementById('help').onclick=()=>document.getElementById('rules').classList.remove('hidden');
+document.getElementById('closeRules').onclick=()=>{document.getElementById('rules').classList.add('hidden');start()};
+document.getElementById('menu').onclick=()=>document.getElementById('settings').classList.remove('hidden');
+document.getElementById('closeSettings').onclick=()=>document.getElementById('settings').classList.add('hidden');
+document.getElementById('newGame').onclick=()=>{reset();document.getElementById('settings').classList.add('hidden')};
+document.getElementById('uiToggle').onclick=()=>{showUI=!showUI;toggle('uiToggle',showUI);document.getElementById('hud').classList.toggle('show',showUI)};
+document.getElementById('hintToggle').onclick=()=>{showStatus=!showStatus;toggle('hintToggle',showStatus);document.getElementById('turn').classList.toggle('show',showStatus)};
+
+canvas.addEventListener('pointerdown',add);
+canvas.addEventListener('wheel',e=>{e.preventDefault();targetScale=Math.max(.4,Math.min(2,targetScale*(e.deltaY>0?.9:1.1)))},{passive:false});
+addEventListener('resize',()=>{canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)});
+
+canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);document.getElementById('header').style.display='none';update();render();
 </script></body></html>
