@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Color Shapes - Territory Control Game</title>
+  <title>Papitta Play - Territory Control Game</title>
   <style>
     * {
       margin: 0;
@@ -48,6 +48,14 @@
       align-items: center;
       pointer-events: auto;
       gap: 20px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .header.show {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
     }
 
     .game-title {
@@ -101,6 +109,23 @@
       background: rgba(239, 68, 68, 0.25);
     }
 
+    .btn-menu {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+      width: 45px;
+      height: 45px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .btn-menu:hover {
+      background: rgba(59, 130, 246, 0.25);
+    }
+
     .scoreboard {
       position: absolute;
       top: 20px;
@@ -109,6 +134,14 @@
       flex-direction: column;
       gap: 12px;
       pointer-events: auto;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .scoreboard.show {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
     }
 
     .score-card {
@@ -179,6 +212,14 @@
       gap: 12px;
       pointer-events: auto;
       font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .turn-indicator.show {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
     }
 
     .turn-swatch {
@@ -212,6 +253,14 @@
       font-size: 12px;
       max-width: 280px;
       line-height: 1.5;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .instructions.show {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
     }
 
     .instr-title {
@@ -237,6 +286,14 @@
       font-size: 13px;
       text-align: center;
       pointer-events: auto;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .stats-panel.show {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
     }
 
     .stats-item {
@@ -244,59 +301,432 @@
       margin: 0 12px;
       font-weight: 500;
     }
+
+    /* Start Screen */
+    .start-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      pointer-events: all;
+    }
+
+    .start-screen.hidden {
+      display: none;
+      pointer-events: none;
+    }
+
+    .start-logo {
+      font-size: 72px;
+      margin-bottom: 20px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .start-title {
+      font-size: 56px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff4d4d, #4da3ff, #4ade80);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .start-desc {
+      font-size: 18px;
+      color: #cbd5e1;
+      margin-bottom: 50px;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .start-buttons {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-large {
+      padding: 16px 40px;
+      font-size: 18px;
+      font-weight: 700;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+      border: 2px solid;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #4da3ff, #4ade80);
+      color: #0f172a;
+      border-color: #4da3ff;
+    }
+
+    .btn-start:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(77, 163, 255, 0.5);
+    }
+
+    .btn-rules {
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .btn-rules:hover {
+      background: rgba(59, 130, 246, 0.25);
+      transform: scale(1.05);
+    }
+
+    /* Settings Menu */
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    .menu-overlay.show {
+      display: flex;
+      pointer-events: all;
+    }
+
+    .menu-panel {
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid rgba(59, 130, 246, 0.5);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 400px;
+      width: 90%;
+      backdrop-filter: blur(12px);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .menu-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .menu-label {
+      color: #cbd5e1;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      background: rgba(59, 130, 246, 0.3);
+      border-radius: 14px;
+      cursor: pointer;
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .toggle.active {
+      background: rgba(74, 222, 128, 0.4);
+      border-color: rgba(74, 222, 128, 0.6);
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: #f1f5f9;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s ease;
+    }
+
+    .toggle.active .toggle-thumb {
+      left: 24px;
+    }
+
+    .menu-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .btn-menu-action {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-menu-close {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+
+    .btn-menu-close:hover {
+      background: rgba(59, 130, 246, 0.25);
+    }
+
+    .btn-menu-reset {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+
+    .btn-menu-reset:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    /* Rules Modal */
+    .rules-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      pointer-events: none;
+    }
+
+    .rules-modal.show {
+      display: flex;
+      pointer-events: all;
+    }
+
+    .rules-content {
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid rgba(59, 130, 246, 0.5);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      backdrop-filter: blur(12px);
+      animation: slideIn 0.3s ease;
+    }
+
+    .rules-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: #f1f5f9;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .rule-section {
+      margin-bottom: 20px;
+    }
+
+    .rule-heading {
+      font-size: 16px;
+      font-weight: 700;
+      color: #4da3ff;
+      margin-bottom: 10px;
+    }
+
+    .rule-text {
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .rules-close {
+      padding: 12px 30px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 25px;
+      width: 100%;
+      transition: all 0.2s ease;
+    }
+
+    .rules-close:hover {
+      background: rgba(59, 130, 246, 0.25);
+    }
   </style>
 </head>
 <body>
+  <div class="start-screen" id="startScreen">
+    <div class="start-logo">🎮</div>
+    <div class="start-title">Papitta Play</div>
+    <div class="start-desc">Multiplayer territory control game. Draw closed figures to capture territory and win!</div>
+    <div class="start-buttons">
+      <button class="btn-large btn-start" id="startGameBtn">▶ Start Game</button>
+      <button class="btn-large btn-rules" id="rulesBtn">📖 How to Play</button>
+    </div>
+  </div>
+
+  <div class="rules-modal" id="rulesModal">
+    <div class="rules-content">
+      <div class="rules-title">How to Play</div>
+      
+      <div class="rule-section">
+        <div class="rule-heading">🎯 Objective</div>
+        <div class="rule-text">Capture territory by drawing closed figures. The player with the most territory wins!</div>
+      </div>
+
+      <div class="rule-section">
+        <div class="rule-heading">🖱️ Controls</div>
+        <div class="rule-text">
+          • <strong>Click</strong> to place points<br>
+          • <strong>Close the shape</strong> to capture territory<br>
+          • <strong>Hold</strong> to reset zoom<br>
+          • <strong>Scroll</strong> to zoom in/out<br>
+          • <strong>2 Fingers</strong> pinch to zoom (mobile)
+        </div>
+      </div>
+
+      <div class="rule-section">
+        <div class="rule-heading">⚙️ Turns</div>
+        <div class="rule-text">Players take turns drawing. Each turn you control one shape. After closing it, the next player's turn begins.</div>
+      </div>
+
+      <div class="rule-section">
+        <div class="rule-heading">📊 Scoring</div>
+        <div class="rule-text">Your score is the total area of all shapes you've captured. Larger and more shapes = higher score!</div>
+      </div>
+
+      <button class="rules-close" id="rulesCloseBtn">Got it! Let's Play</button>
+    </div>
+  </div>
+
   <canvas id="gameCanvas"></canvas>
 
   <div class="ui-container">
-    <div class="header">
-      <div class="game-title">🎮 Color Territory</div>
+    <div class="header" id="header">
+      <div class="game-title">🎮 Papitta Play</div>
       <div class="controls">
-        <button class="btn btn-reset" id="resetBtn">↺ Новая игра</button>
+        <button class="btn btn-menu" id="menuBtn" title="Menu">⚙️</button>
       </div>
     </div>
 
-    <div class="scoreboard">
+    <div class="scoreboard" id="scoreboard">
       <div class="score-card red" id="scoreRed">
-        <div class="score-player-name">🔴 Красный</div>
+        <div class="score-player-name">🔴 Red</div>
         <div class="score-value">
           <span id="scoreRedValue">0</span>
-          <span class="score-area" id="scoreRedArea">кв.м</span>
+          <span class="score-area" id="scoreRedArea">sq.m</span>
         </div>
       </div>
       <div class="score-card blue" id="scoreBlue">
-        <div class="score-player-name">🔵 Синий</div>
+        <div class="score-player-name">🔵 Blue</div>
         <div class="score-value">
           <span id="scoreBlueValue">0</span>
-          <span class="score-area" id="scoreBlueArea">кв.м</span>
+          <span class="score-area" id="scoreBlueArea">sq.m</span>
         </div>
       </div>
       <div class="score-card green" id="scoreGreen">
-        <div class="score-player-name">🟢 Зелёный</div>
+        <div class="score-player-name">🟢 Green</div>
         <div class="score-value">
           <span id="scoreGreenValue">0</span>
-          <span class="score-area" id="scoreGreenArea">кв.м</span>
+          <span class="score-area" id="scoreGreenArea">sq.m</span>
         </div>
       </div>
     </div>
 
     <div class="turn-indicator" id="turnIndicator">
       <div class="turn-swatch" id="turnSwatch"></div>
-      <span id="turnText">Ход: Красный</span>
+      <span id="turnText">Turn: Red</span>
     </div>
 
-    <div class="instructions">
-      <div class="instr-title">📖 Как играть</div>
-      <div class="instr-item">🖱 Клик = точка</div>
-      <div class="instr-item">🔄 Замкни фигуру = захвата</div>
-      <div class="instr-item">⏱ Удержание = зум сброс</div>
-      <div class="instr-item">👐 2 пальца = zoom</div>
+    <div class="instructions" id="instructions">
+      <div class="instr-title">📖 Guide</div>
+      <div class="instr-item">🖱 Click = point</div>
+      <div class="instr-item">🔄 Close = capture</div>
+      <div class="instr-item">⏱ Hold = zoom reset</div>
+      <div class="instr-item">🔍 Scroll = zoom</div>
     </div>
 
     <div class="stats-panel" id="statsPanel">
-      <span class="stats-item">Территория захвачена: <span id="totalArea">0</span></span>
-      <span class="stats-item">Фигур: <span id="totalFilled">0</span></span>
+      <span class="stats-item">Territory: <span id="totalArea">0</span> sq.m</span>
+      <span class="stats-item">Shapes: <span id="totalFilled">0</span></span>
+    </div>
+  </div>
+
+  <div class="menu-overlay" id="menuOverlay">
+    <div class="menu-panel">
+      <div class="menu-title">⚙️ Settings</div>
+      
+      <div class="menu-item">
+        <span class="menu-label">Show UI</span>
+        <div class="toggle active" id="toggleUI">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <span class="menu-label">Show Instructions</span>
+        <div class="toggle active" id="toggleInstructions">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+
+      <div class="menu-buttons">
+        <button class="btn-menu-action btn-menu-close" id="menuCloseBtn">Close</button>
+        <button class="btn-menu-action btn-menu-reset" id="menuResetBtn">New Game</button>
+      </div>
     </div>
   </div>
 
@@ -312,9 +742,9 @@
     };
 
     const names = {
-      red: "Красный",
-      blue: "Синий",
-      green: "Зелёный"
+      red: "Red",
+      blue: "Blue",
+      green: "Green"
     };
 
     const order = ["red", "blue", "green"];
@@ -337,6 +767,11 @@
     let pointerDown = false;
     const pinch = { active: false, startDist: 0, startScale: 1 };
 
+    // UI State
+    let gameStarted = false;
+    let showUI = true;
+    let showInstructions = true;
+
     // ============ Setup ============
     function resizeCanvas() {
       canvas.width = window.innerWidth * devicePixelRatio;
@@ -347,11 +782,10 @@
     function setCurrentTurn(index) {
       currentTurn = index % order.length;
       const color = order[currentTurn];
-      document.getElementById("turnText").textContent = "Ход: " + names[color];
+      document.getElementById("turnText").textContent = "Turn: " + names[color];
       document.getElementById("turnSwatch").style.background = COLORS[color].rgb;
       document.getElementById("turnSwatch").style.boxShadow = `0 0 16px ${COLORS[color].rgb}`;
 
-      // Update score card active state
       document.querySelectorAll(".score-card").forEach(card => card.classList.remove("active"));
       document.getElementById("score" + color.charAt(0).toUpperCase() + color.slice(1)).classList.add("active");
     }
@@ -419,7 +853,6 @@
         return;
       }
 
-      // Don't add point too close to last point
       if (arr.length > 0 && distance(arr[arr.length - 1], snapped) < 20) {
         return;
       }
@@ -439,12 +872,10 @@
           state.scores[color] += Math.round(area / 100);
           updateScoreboard();
 
-          // Clear points after capturing
           state.points[color] = [];
         }
       }
 
-      // Zoom out after move
       targetScale = clamp(worldScale * 0.88, 0.4, 1.5);
       nextTurn();
     }
@@ -465,7 +896,6 @@
     function updateScoreboard() {
       for (const color of order) {
         const score = state.scores[color];
-        const area = score * 100;
         document.getElementById(`score${color.charAt(0).toUpperCase() + color.slice(1)}Value`).textContent = score;
       }
 
@@ -597,7 +1027,6 @@
       canvas.height = window.innerHeight * devicePixelRatio;
       ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
 
-      // Background
       ctx.fillStyle = "#0f172a";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -623,7 +1052,7 @@
     }
 
     function handlePointerDown(event) {
-      if (event.button === 2) return; // Right click
+      if (!gameStarted || event.button === 2) return;
       pointerDown = true;
       pointerPressStart = performance.now();
 
@@ -638,6 +1067,7 @@
     }
 
     function handleWheel(event) {
+      if (!gameStarted) return;
       event.preventDefault();
       const factor = event.deltaY > 0 ? 0.9 : 1.1;
       targetScale = clamp(targetScale * factor, 0.4, 2);
@@ -687,9 +1117,95 @@
       }
     }
 
-    // ============ Init ============
-    setCurrentTurn(0);
-    updateScoreboard();
+    // ============ UI Controls ============
+    function toggleUI() {
+      showUI = !showUI;
+      const header = document.getElementById("header");
+      const scoreboard = document.getElementById("scoreboard");
+      const turnIndicator = document.getElementById("turnIndicator");
+      const statsPanel = document.getElementById("statsPanel");
+      
+      if (showUI) {
+        header.classList.add("show");
+        scoreboard.classList.add("show");
+        turnIndicator.classList.add("show");
+        statsPanel.classList.add("show");
+      } else {
+        header.classList.remove("show");
+        scoreboard.classList.remove("show");
+        turnIndicator.classList.remove("show");
+        statsPanel.classList.remove("show");
+      }
+    }
+
+    function toggleInstructions() {
+      showInstructions = !showInstructions;
+      const instructions = document.getElementById("instructions");
+      if (showInstructions) {
+        instructions.classList.add("show");
+      } else {
+        instructions.classList.remove("show");
+      }
+    }
+
+    function startGame() {
+      document.getElementById("startScreen").classList.add("hidden");
+      gameStarted = true;
+      document.getElementById("header").classList.add("show");
+      document.getElementById("scoreboard").classList.add("show");
+      document.getElementById("turnIndicator").classList.add("show");
+      document.getElementById("statsPanel").classList.add("show");
+      document.getElementById("instructions").classList.add("show");
+      setCurrentTurn(0);
+      updateScoreboard();
+    }
+
+    // ============ Event Listeners ============
+    document.getElementById("startGameBtn").addEventListener("click", startGame);
+    
+    document.getElementById("rulesBtn").addEventListener("click", () => {
+      document.getElementById("rulesModal").classList.add("show");
+    });
+
+    document.getElementById("rulesCloseBtn").addEventListener("click", () => {
+      document.getElementById("rulesModal").classList.remove("show");
+      startGame();
+    });
+
+    document.getElementById("menuBtn").addEventListener("click", () => {
+      document.getElementById("menuOverlay").classList.add("show");
+    });
+
+    document.getElementById("menuCloseBtn").addEventListener("click", () => {
+      document.getElementById("menuOverlay").classList.remove("show");
+    });
+
+    document.getElementById("menuResetBtn").addEventListener("click", () => {
+      resetGame();
+      document.getElementById("menuOverlay").classList.remove("show");
+    });
+
+    document.getElementById("toggleUI").addEventListener("click", function() {
+      this.classList.toggle("active");
+      toggleUI();
+    });
+
+    document.getElementById("toggleInstructions").addEventListener("click", function() {
+      this.classList.toggle("active");
+      toggleInstructions();
+    });
+
+    document.getElementById("menuOverlay").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("menuOverlay")) {
+        document.getElementById("menuOverlay").classList.remove("show");
+      }
+    });
+
+    document.getElementById("rulesModal").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("rulesModal")) {
+        document.getElementById("rulesModal").classList.remove("show");
+      }
+    });
 
     canvas.addEventListener("pointerdown", handlePointerDown);
     canvas.addEventListener("pointerup", handlePointerUp);
@@ -704,8 +1220,6 @@
     canvas.addEventListener("touchcancel", handleTouchEnd, { passive: true });
 
     window.addEventListener("resize", resizeCanvas);
-
-    document.getElementById("resetBtn").addEventListener("click", resetGame);
 
     resizeCanvas();
     requestAnimationFrame(tick);
